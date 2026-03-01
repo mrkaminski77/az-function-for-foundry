@@ -96,7 +96,9 @@ def _check_foundry_agent(credential: DefaultAzureCredential) -> dict[str, Any]:
         raise ValueError(f"Secret '{secret_name}' has no value")
 
     # Invoke specific agent
-    invoke_url = f"{endpoint}/projects/{project}/agents/{agent}:invoke?api-version={api_version}"
+    #https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj-default
+    invoke_url = f"{endpoint}/api/projects/{project}/agents/{agent}:invoke?api-version={api_version}"
+
     headers = {
         "api-key": foundry_key,
         "Content-Type": "application/json",
