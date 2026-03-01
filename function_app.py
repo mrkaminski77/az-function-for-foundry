@@ -72,40 +72,54 @@ def _check_key_vault(credential: DefaultAzureCredential) -> dict[str, Any]:
 
 def _check_foundry_agent(credential: DefaultAzureCredential) -> dict[str, Any]:
     start = time.perf_counter()
-    endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT", "").strip()
+    endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip().rstrip("/")
+    project = os.getenv("AZURE_AI_FOUNDRY_PROJECT", "").strip()
+    agent = os.getenv("AZURE_AI_FOUNDRY_AGENT", "").strip()
+    api_version = os.getenv("AZURE_AI_FOUNDRY_API_VERSION", "2024-10-01-preview").strip()
     vault_url = os.getenv("KEY_VAULT_URL", "").strip()
     secret_name = os.getenv("KEY_VAULT_SECRET_NAME", "").strip()
 
     if not endpoint:
-        raise ValueError("Missing AZURE_AI_PROJECT_ENDPOINT")
+        raise ValueError("Missing AZURE_AI_FOUNDRY_ENDPOINT")
+    if not project:
+        raise ValueError("Missing AZURE_AI_FOUNDRY_PROJECT")
+    if not agent:
+        raise ValueError("Missing AZURE_AI_FOUNDRY_AGENT")
     if not vault_url:
         raise ValueError("Missing KEY_VAULT_URL")
     if not secret_name:
         raise ValueError("Missing KEY_VAULT_SECRET_NAME")
 
-    # Get Foundry key from Key Vault using MSI
     kv_client = SecretClient(vault_url=vault_url, credential=credential)
     foundry_key = kv_client.get_secret(secret_name).value
     if not foundry_key:
         raise ValueError(f"Secret '{secret_name}' has no value")
 
-    # Use key-based auth for Foundry
-    project_client = AIProjectClient(
-        endpoint=endpoint,
-        credential=AzureKeyCredential(foundry_key),
-    )
-    agents = project_client.agents.list_agents()
-    first_agent = next(iter(agents), None)
+    # Invoke specific agent
+    invoke_url = f"{endpoint}/projects/{project}/agents/{agent}:invoke?api-version={api_version}"
+    headers = {
+        "api-key": foundry_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "input": "Hello, Agent! This is a connectivity test."
+        # If your API expects messages, switch to:
+        # "messages": [{"role": "user", "content": "Hello, Agent! This is a connectivity test."}]
+    }
+
+    response = requests.post(invoke_url, headers=headers, json=payload, timeout=20)
+    ok = 200 <= response.status_code < 300
 
     details = {
-        "projectEndpoint": endpoint,
-        "keyVaultSecretName": secret_name,
-        "canListAgents": True,
-        "firstAgentId": getattr(first_agent, "id", None),
-        "firstAgentName": getattr(first_agent, "name", None),
+        "invokeUrl": invoke_url,
+        "statusCode": response.status_code,
+        "responsePreview": response.text[:500],
     }
-    return _result("foundryAgent", True, details, (time.perf_counter() - start) * 1000)    
 
+    if not ok:
+        raise RuntimeError(json.dumps(details))
+
+    return _result("foundryAgent", True, details, (time.perf_counter() - start) * 1000)
 
 def _check_entra(credential: DefaultAzureCredential) -> tuple[dict[str, Any], str]:
     start = time.perf_counter()

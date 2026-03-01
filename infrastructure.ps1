@@ -824,7 +824,9 @@ az functionapp config appsettings set `
      --settings "AzureWebJobsStorage__accountName=$FUNC_STORAGE_ACCOUNT" `
          "KEY_VAULT_URL=https://$FUNC_KV_NAME.vault.azure.net/" `
          "KEY_VAULT_SECRET_NAME=ai-foundry-key" `
-         "AZURE_AI_PROJECT_ENDPOINT=https://sra1d-foundry-01.services.ai.azure.com/" `
+         "AZURE_AI_FOUNDRY_ENDPOINT=https://sra1d-foundry-01.services.ai.azure.com/" `
+         "AZURE_AI_FOUNDRY_PROJECT=proj-default" `
+         "AZURE_AI_FOUNDRY_AGENT=asst_NXAoRTS8nqCoUZTQrM6gP06T" `
          "ENTRA_TEST_SCOPE=https://graph.microsoft.com/.default" `
          "GRAPH_API_URL=https://graph.microsoft.com/v1.0" `
          "STORAGE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.blob.core.windows.net/" `
