@@ -26,4 +26,4 @@ $key = az functionapp keys list --resource-group $rg --name $app --query "functi
 # 6) Open test URL
 $url = "https://$app.azurewebsites.net/api/connectivity?code=$key"
 $url
-Start-Process $url
+curl $url
