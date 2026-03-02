@@ -31,10 +31,10 @@ def _get_austender_ocds_contracts(
         A list of normalized contract dicts extracted from OCDS awards.
     """
     query = dict(params or {})
-    response = requests.get(ocds_url, params=query, timeout=timeout)
-    response.raise_for_status()
-    payload = response.json()
-
+    #response = requests.get(ocds_url, params=query, timeout=timeout)
+    #response.raise_for_status()
+    #payload = response.json()
+    payload = _get_dummy_ocds_response()  # For development/testing without hitting real API
     # OCDS packages can contain "releases" or "records"
     releases: list[dict[str, Any]] = []
 
@@ -181,7 +181,12 @@ def _get_and_classify_contracts(
     params: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
  
-    contracts = _get_dummy_ocds_response()
+    contracts = _get_austender_ocds_contracts(
+        ocds_url=ocds_url,
+        limit=limit,
+        timeout=timeout,
+        params=params,
+    )
     results: list[dict[str, Any]] = []
     for contract in contracts:
         classification = _classify_contract(contract)
