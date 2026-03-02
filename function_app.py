@@ -13,6 +13,7 @@ from src.connectivitychecks import (
     _check_foundry_agent,
     _check_entra,
     _check_graph,
+    _result
 )
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
