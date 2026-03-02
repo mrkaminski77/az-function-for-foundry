@@ -12,6 +12,13 @@ from azure.keyvault.secrets import SecretClient
 from azure.storage.blob import BlobServiceClient
 from azure.ai.agents.models import ListSortOrder
 
+from azure.data.tables import TableClient
+from azure.core.exceptions import ResourceExistsError
+import uuid
+
+import random
+
+
 def _get_austender_ocds_contracts(
     ocds_url: str,
     limit: int = 100,
@@ -185,7 +192,16 @@ def _get_and_classify_contracts(
     timeout: int = 30,
     params: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
- 
+
+    storage_account = os.getenv("STORAGE_ACCOUNT_URL", "").strip()
+    table_name = "AustenderClassifications"
+    table_client = TableClient(
+        endpoint=storage_account, 
+        table_name=table_name, 
+        credential=DefaultAzureCredential()
+    )
+    table_client.create_table_if_not_exists()
+
     contracts = _get_austender_ocds_contracts(
         ocds_url=ocds_url,
         limit=limit,
@@ -195,6 +211,30 @@ def _get_and_classify_contracts(
     results: list[dict[str, Any]] = []
     for contract in contracts:
         classification = _classify_contract(contract)
+
+        table_entity = {
+            "PartitionKey": contract.get("ocid", "unknown_ocid"),
+            "RowKey": contract.get("awardId", "unknown_awardId"),
+            "ClassificationResult": json.dumps(classification)
+        }
+        if table_client.get_entity(partition_key=table_entity["PartitionKey"], row_key=table_entity["RowKey"]):
+             logging.info(f"Classification for contract {contract.get('ocid')} already exists in table. Skipping.")
+             results.append(
+                {
+                    "ocid": contract.get("ocid"),
+                    "classification": classification,
+                }
+            )
+             continue
+        try:
+            table_client.create_entity(entity=table_entity)
+        except Exception as ex:
+            return _error_payload(
+                code="TABLE_ENTITY_CREATION_FAILED",
+                message="Failed to create table entity.",
+                details=str(ex),
+            )
+
         results.append(
             {
                 "ocid": contract.get("ocid"),
@@ -208,6 +248,9 @@ def _get_and_classify_contracts(
 
 
 def _get_dummy_ocds_response() -> dict[str, Any]:
+    ocid = f"ocds-{uuid.uuid4().hex[:8]}"
+    id = f"award-{uuid.uuid4().hex[:8]}"
+    description = _generate_description()
     return {
         "uri": "https://example.local/ocds/releases",
         "version": "1.1",
@@ -219,16 +262,16 @@ def _get_dummy_ocds_response() -> dict[str, Any]:
         "publishedDate": "2026-03-02T00:00:00Z",
         "releases": [
             {
-                "ocid": "ocds-dummy-0001",
+                "ocid": ocid,
                 "id": "release-0001",
                 "date": "2026-03-02T00:00:00Z",
                 "tag": ["award"],
                 "initiationType": "tender",
                 "awards": [
                     {
-                        "id": "award-0001",
+                        "id": id,
                         "title": "Dummy Cloud Migration Services",
-                        "description": "Development-only sample contract for local testing.",
+                        "description": description,
                         "status": "active",
                         "date": "2026-03-02T00:00:00Z",
                         "value": {
@@ -246,5 +289,64 @@ def _get_dummy_ocds_response() -> dict[str, Any]:
         ],
     }
 
-        
-            
+
+
+def _generate_description() -> str:
+    prompts = [
+        "Generate a fictitious government contract description for something related to defence.",
+        "Generate a fictitious government contract description for something related to healthcare.",
+        "Generate a fictitious government contract description for something related to infrastructure.",
+        "Generate a fictitious government contract description for something related to justice.",
+        "Generate a fictitious government contract description for something related to immigration."
+    ]
+    modifiers = [
+        "Focus on emerging technologies.",
+        "Make it a small-scale regional project.",
+        "Include a focus on sustainability.",
+        "Set the timeline for 10 years.",
+        "Emphasize cybersecurity requirements."
+    ]    
+    endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip().rstrip("/")
+    project_name = os.getenv("AZURE_AI_FOUNDRY_PROJECT", "").strip()
+    configured_agent_id = "asst_N5IUF0XWUCRksPX64PlpfzKf"
+
+    project_endpoint = "https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj-default"
+    if endpoint and project_name:
+        project_endpoint = f"{endpoint}/api/projects/{project_name}"
+
+    client = AIProjectClient(
+        credential=DefaultAzureCredential(),
+        endpoint=project_endpoint,
+    )
+
+    agent_id = configured_agent_id or "asst_NXAoRTS8nqCoUZTQrM6gP06T"
+    agent = client.agents.get_agent(agent_id)
+    thread = client.agents.threads.create()
+
+    client.agents.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=random.choice(prompts) + " " + random.choice(modifiers),
+    )
+
+    run = client.agents.runs.create_and_process(
+        thread_id=thread.id,
+        agent_id=agent.id,
+    )
+
+    if run.status == "failed":
+        return "Error generating description: Agent run failed."
+
+    messages = client.agents.messages.list(
+        thread_id=thread.id,
+        order=ListSortOrder.DESCENDING,
+    )
+    if not messages:
+        return "Error generating description: Agent returned no messages."
+
+    latest = next(iter(messages), None)
+    if latest is None:
+        return "Error generating description: Agent returned no messages."
+    content = latest.content    
+    return content if isinstance(content, str) else str(content)
+

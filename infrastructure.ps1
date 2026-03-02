@@ -252,6 +252,7 @@ $HUB_MONITOR_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET
 $HUB_OMS_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.oms.opinsights.azure.com"
 $HUB_ODS_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.ods.opinsights.azure.com"
 $HUB_AGENTSVC = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.agentsvc.azure.com"
+$HUB_BLOB_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
 
 az network private-endpoint dns-zone-group create `
     --resource-group $HUB_VNET_RG `
@@ -280,6 +281,13 @@ az network private-endpoint dns-zone-group create `
     --name "ampls-dns-zone-group" `
     --subscription $SUBSCRIPTION_ID `
     --zone-name "agentsvc" --private-dns-zone $HUB_AGENTSVC
+
+az network private-endpoint dns-zone-group create `
+    --resource-group $HUB_VNET_RG `
+    --endpoint-name $pename `
+    --name "ampls-dns-zone-group" `
+    --subscription $SUBSCRIPTION_ID `
+    --zone-name "blob" --private-dns-zone $HUB_BLOB_ZONE_ID
 
 # Enable diagnostics on hub resource group resources
 $law_name = "$PROJECT-law"
@@ -851,3 +859,11 @@ az keyvault secret set `
     --value $AI_KEY `
     --subscription $SUBSCRIPTION_ID
 
+az monitor diagnostic-settings create `
+    --name "funcapp-diagnostics" `
+    --resource "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$FUNC_RG/providers/Microsoft.Web/sites/$FUNC_NAME" `
+    --workspace $law_name `
+    --resource-group $HUB_VNET_RG `
+    --logs '[{"category":"FunctionAppLogs","enabled":true},{"category":"AppServiceAuditLogs","enabled":true},{"category":"AppServiceIPSecAuditLogs","enabled":true}]' `
+    --metrics '[{"category":"AllMetrics","enabled":true}]' `
+    --subscription $SUBSCRIPTION_ID
