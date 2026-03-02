@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from typing import Any
+from azure.identity import DefaultAzureCredential
 
 import azure.functions as func
 from src.austender import _get_and_classify_contracts
