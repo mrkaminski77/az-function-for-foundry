@@ -826,10 +826,11 @@ az functionapp config appsettings set `
          "KEY_VAULT_SECRET_NAME=ai-foundry-key" `
          "AZURE_AI_FOUNDRY_ENDPOINT=https://sra1d-foundry-01.services.ai.azure.com/" `
          "AZURE_AI_FOUNDRY_PROJECT=proj-default" `
-         "AZURE_AI_FOUNDRY_AGENT=asst_NXAoRTS8nqCoUZTQrM6gP06T" `
+         "AZURE_AI_FOUNDRY_AGENT=asst_jvXRZdimLpqYRb9PrO72tPXp" `
          "ENTRA_TEST_SCOPE=https://graph.microsoft.com/.default" `
          "GRAPH_API_URL=https://graph.microsoft.com/v1.0" `
          "STORAGE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.blob.core.windows.net/" `
+         "AUSTENDER_OCDS_URL=https://api.tenders.gov.au/" `
          --subscription $SUBSCRIPTION_ID
 
 

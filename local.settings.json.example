@@ -7,6 +7,7 @@
     "KEY_VAULT_URL": "https://<key-vault-name>.vault.azure.net/",
     "KEY_VAULT_SECRET_NAME": "",
     "AZURE_AI_PROJECT_ENDPOINT": "https://<foundry-resource-name>.services.ai.azure.com/api/projects/<project-name>",
+    "AUSTENDER_OCDS_URL": "https://api.tenders.gov.au/ocds/releases",
     "ENTRA_TEST_SCOPE": "https://graph.microsoft.com/.default",
     "GRAPH_API_URL": "https://graph.microsoft.com/v1.0/"
   }
