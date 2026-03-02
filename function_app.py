@@ -74,54 +74,50 @@ def _check_foundry_agent(credential: DefaultAzureCredential) -> dict[str, Any]:
     start = time.perf_counter()
     endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip().rstrip("/")
     project = os.getenv("AZURE_AI_FOUNDRY_PROJECT", "").strip()
-    agent = os.getenv("AZURE_AI_FOUNDRY_AGENT", "").strip()
-    api_version = os.getenv("AZURE_AI_FOUNDRY_API_VERSION", "2024-10-01-preview").strip()
-    vault_url = os.getenv("KEY_VAULT_URL", "").strip()
-    secret_name = os.getenv("KEY_VAULT_SECRET_NAME", "").strip()
+    agent_id = os.getenv("AZURE_AI_FOUNDRY_AGENT", "").strip()
+    project_endpoint = f"{endpoint}/api/projects/{project}"
+    project_endpoint = "https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj_default"
+    prompt = "Hello Agent, this is a connectivity test. Please respond with OK."
 
-    if not endpoint:
-        raise ValueError("Missing AZURE_AI_FOUNDRY_ENDPOINT")
-    if not project:
-        raise ValueError("Missing AZURE_AI_FOUNDRY_PROJECT")
-    if not agent:
-        raise ValueError("Missing AZURE_AI_FOUNDRY_AGENT")
-    if not vault_url:
-        raise ValueError("Missing KEY_VAULT_URL")
-    if not secret_name:
-        raise ValueError("Missing KEY_VAULT_SECRET_NAME")
+    project = AIProjectClient(
+        credential=DefaultAzureCredential(),
+        endpoint="https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj-default")
 
-    kv_client = SecretClient(vault_url=vault_url, credential=credential)
-    foundry_key = kv_client.get_secret(secret_name).value
-    if not foundry_key:
-        raise ValueError(f"Secret '{secret_name}' has no value")
+    agent = project.agents.get_agent("asst_NXAoRTS8nqCoUZTQrM6gP06T")
+    # create a thread
+    thread = project.agents.threads.create()
 
-    # Invoke specific agent
-    #https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj-default
-    invoke_url = f"{endpoint}/api/projects/{project}/agents/{agent}:invoke?api-version={api_version}"
+    # post a message to the thread
+    message = project.agents.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=prompt
+    )
+    # process the thread using the specified agent
+    run = project.agents.runs.create_and_process(
+    thread_id=thread.id,
+    agent_id=agent.id)
+    result = None
+    if run.status == "failed":
+        print(f"Run failed: {run.last_error}")
+    else:
+        messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
 
-    headers = {
-        "api-key": foundry_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "input": "Hello, Agent! This is a connectivity test."
-        # If your API expects messages, switch to:
-        # "messages": [{"role": "user", "content": "Hello, Agent! This is a connectivity test."}]
-    }
+        for message in messages:
+            if message.text_messages:
+                result = (f"{message.role}: {message.text_messages[-1].text.value}")
 
-    response = requests.post(invoke_url, headers=headers, json=payload, timeout=20)
-    ok = 200 <= response.status_code < 300
-
+    stop = time.perf_counter()
     details = {
-        "invokeUrl": invoke_url,
-        "statusCode": response.status_code,
-        "responsePreview": response.text[:500],
+        "endpoint": endpoint,
+        "project": project_endpoint,
+        "agentId": agent_id,
+        "prompt": prompt,
+        "runStatus": run.status,
+        "agentResponse": result
     }
+    return _result("foundryAgent", True, details, (stop - start) * 1000)
 
-    if not ok:
-        raise RuntimeError(json.dumps(details))
-
-    return _result("foundryAgent", True, details, (time.perf_counter() - start) * 1000)
 
 def _check_entra(credential: DefaultAzureCredential) -> tuple[dict[str, Any], str]:
     start = time.perf_counter()
