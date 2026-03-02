@@ -134,7 +134,12 @@ def _classify_contract(contract: dict[str, Any]) -> dict[str, Any]:
                 message="Agent returned no messages.",
             )
 
-        latest = messages[0]
+        latest = next(iter(messages), None)
+        if latest is None:
+            return _error_payload(
+                code="NO_AGENT_MESSAGES",
+                message="Agent returned no messages.",
+            )
         content = latest.content
         response_text = ""
 
