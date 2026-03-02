@@ -3,4 +3,5 @@ azure-identity
 azure-storage-blob
 azure-keyvault-secrets
 azure-ai-projects
+azure-data-tables
 requests
