@@ -180,13 +180,8 @@ def _get_and_classify_contracts(
     timeout: int = 30,
     params: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-"""     contracts = _get_austender_ocds_contracts(
-        ocds_url=ocds_url,
-        limit=limit,
-        timeout=timeout,
-        params=params,
-    )
- """    contracts = _get_dummy_ocds_response()
+ 
+    contracts = _get_dummy_ocds_response()
     results: list[dict[str, Any]] = []
     for contract in contracts:
         classification = _classify_contract(contract)
