@@ -126,7 +126,7 @@ def _classify_contract(contract: dict[str, Any]) -> dict[str, Any]:
 
         messages = client.agents.messages.list(
             thread_id=thread.id,
-            sort_order=ListSortOrder.DESCENDING,
+            order=ListSortOrder.DESCENDING,
         )
         if not messages:
             return _error_payload(
