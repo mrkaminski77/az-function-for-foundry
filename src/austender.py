@@ -200,7 +200,11 @@ def _get_and_classify_contracts(
         table_name=table_name, 
         credential=DefaultAzureCredential()
     )
-    table_client.create_table_if_not_exists()
+    try:
+        table_item = table_client.create_table()
+    except ResourceExistsError:
+        pass  # Table already exists, which is fine
+        
 
     contracts = _get_austender_ocds_contracts(
         ocds_url=ocds_url,
