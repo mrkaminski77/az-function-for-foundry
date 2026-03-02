@@ -163,7 +163,7 @@ def _classify_contract(contract: dict[str, Any]) -> dict[str, Any]:
             return _error_payload(
                 code="INVALID_JSON_RESPONSE",
                 message="Agent response is not valid JSON.",
-                details=ex,
+                details=f"Response text: {response_text}, JSON error: {ex}",
             )
 
         return {
