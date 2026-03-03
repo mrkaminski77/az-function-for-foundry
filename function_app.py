@@ -44,8 +44,22 @@ def classify_austender_contracts(req: func.HttpRequest) -> func.HttpResponse:
         )
     except Exception as exc:
         logging.exception("AusTender classify function failed")
+
+        error_payload: dict[str, Any] = {
+            "type": type(exc).__name__,
+            "error": str(exc),
+        }
+
+        resp = getattr(exc, "response", None)
+        if resp is not None:
+            req_obj = getattr(resp, "request", None)
+            error_payload["downstreamStatus"] = getattr(resp, "status_code", None)
+            error_payload["downstreamMethod"] = getattr(req_obj, "method", None)
+            error_payload["downstreamUrl"] = getattr(req_obj, "url", None)
+            error_payload["downstreamBody"] = (getattr(resp, "text", "") or "")[:1000]
+
         return func.HttpResponse(
-            body=json.dumps({"error": str(exc)}),
+            body=json.dumps(error_payload, indent=2),
             status_code=500,
             mimetype="application/json",
         )
