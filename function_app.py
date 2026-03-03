@@ -64,6 +64,8 @@ def classify_austender_contracts(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json",
         )
 
+
+
 @app.route(route="connectivity", methods=["GET"], auth_level=func.AuthLevel.FUNCTION)
 def connectivity(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Connectivity test function started.")

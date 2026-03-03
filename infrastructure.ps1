@@ -838,6 +838,7 @@ az functionapp config appsettings set `
          "ENTRA_TEST_SCOPE=https://graph.microsoft.com/.default" `
          "GRAPH_API_URL=https://graph.microsoft.com/v1.0" `
          "STORAGE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.blob.core.windows.net/" `
+         "TABLE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.table.core.windows.net/" `
          "AUSTENDER_OCDS_URL=https://api.tenders.gov.au/" `
          --subscription $SUBSCRIPTION_ID
 

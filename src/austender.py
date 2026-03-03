@@ -4,6 +4,7 @@ from typing import Any
 import json
 import os
 import requests
+import logging
 
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
@@ -13,10 +14,25 @@ from azure.storage.blob import BlobServiceClient
 from azure.ai.agents.models import ListSortOrder
 
 from azure.data.tables import TableClient
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError
 import uuid
 
 import random
+
+
+def _resolve_table_endpoint() -> str:
+    table_endpoint = os.getenv("TABLE_ACCOUNT_URL", "").strip().rstrip("/")
+    if table_endpoint:
+        return table_endpoint
+
+    storage_endpoint = os.getenv("STORAGE_ACCOUNT_URL", "").strip().rstrip("/")
+    if not storage_endpoint:
+        raise ValueError("Missing TABLE_ACCOUNT_URL (or STORAGE_ACCOUNT_URL fallback)")
+
+    if ".blob." in storage_endpoint:
+        return storage_endpoint.replace(".blob.", ".table.")
+
+    return storage_endpoint
 
 
 def _get_austender_ocds_contracts(
@@ -193,17 +209,22 @@ def _get_and_classify_contracts(
     params: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
 
-    storage_account = os.getenv("STORAGE_ACCOUNT_URL", "").strip()
+    table_endpoint = _resolve_table_endpoint()
     table_name = "AustenderClassifications"
     table_client = TableClient(
-        endpoint=storage_account, 
-        table_name=table_name, 
+        endpoint=table_endpoint,
+        table_name=table_name,
         credential=DefaultAzureCredential()
     )
     try:
-        table_item = table_client.create_table()
+        table_client.create_table()
     except ResourceExistsError:
         pass  # Table already exists, which is fine
+    except HttpResponseError as ex:
+        raise RuntimeError(
+            f"Failed to access/create table '{table_name}' at endpoint '{table_endpoint}'. "
+            f"Verify TABLE_ACCOUNT_URL points to a Table endpoint (*.table.core.windows.net)."
+        ) from ex
         
 
     contracts = _get_austender_ocds_contracts(
@@ -221,23 +242,29 @@ def _get_and_classify_contracts(
             "RowKey": contract.get("awardId", "unknown_awardId"),
             "ClassificationResult": json.dumps(classification)
         }
-        if table_client.get_entity(partition_key=table_entity["PartitionKey"], row_key=table_entity["RowKey"]):
-             logging.info(f"Classification for contract {contract.get('ocid')} already exists in table. Skipping.")
-             results.append(
+        try:
+            table_client.get_entity(
+                partition_key=table_entity["PartitionKey"],
+                row_key=table_entity["RowKey"],
+            )
+            logging.info(f"Classification for contract {contract.get('ocid')} already exists in table. Skipping.")
+            results.append(
                 {
                     "ocid": contract.get("ocid"),
                     "classification": classification,
                 }
             )
-             continue
+            continue
+        except ResourceNotFoundError:
+            pass
+
         try:
             table_client.create_entity(entity=table_entity)
         except Exception as ex:
-            return _error_payload(
-                code="TABLE_ENTITY_CREATION_FAILED",
-                message="Failed to create table entity.",
-                details=str(ex),
-            )
+            raise RuntimeError(
+                f"Failed to create table entity for ocid={contract.get('ocid')} "
+                f"awardId={contract.get('awardId')}"
+            ) from ex
 
         results.append(
             {
