@@ -270,6 +270,7 @@ def _get_and_classify_contracts(
             {
                 "ocid": contract.get("ocid"),
                 "classification": classification,
+                "award description": contract.get("description")
             }
         )
 
