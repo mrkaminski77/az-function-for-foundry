@@ -906,3 +906,19 @@ az functionapp config appsettings set `
      --resource-group $FUNC_RG `
      --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=$connection_string" `
      --subscription $SUBSCRIPTION_ID
+
+az functionapp config appsettings set `
+--name $FUNC_NAME `
+--resource-group $FUNC_RG `
+--settings "AzureWebJobsStorage__accountName=$FUNC_STORAGE_ACCOUNT" `
+    "KEY_VAULT_URL=https://$FUNC_KV_NAME.vault.azure.net/" `
+    "KEY_VAULT_SECRET_NAME=ai-foundry-key" `
+    "AZURE_AI_FOUNDRY_ENDPOINT=https://sra1d-foundry-01.services.ai.azure.com/" `
+    "AZURE_AI_FOUNDRY_PROJECT=proj-default" `
+    "AZURE_AI_FOUNDRY_CLASSIFIER_AGENT=asst_jvXRZdimLpqYRb9PrO72tPXp" `
+    "ENTRA_TEST_SCOPE=https://graph.microsoft.com/.default" `
+    "GRAPH_API_URL=https://graph.microsoft.com/v1.0" `
+    "STORAGE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.blob.core.windows.net/" `
+    "TABLE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.table.core.windows.net/" `
+    "AUSTENDER_OCDS_URL=https://api.tenders.gov.au/" `
+    --subscription $SUBSCRIPTION_ID

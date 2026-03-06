@@ -19,6 +19,17 @@ It exposes:
 - Method: `GET`
 - Auth level: `function`
 
+## Table Storage Diagnostics Endpoints
+
+- Route: `/api/diagnostics/tables?limit=50`
+	- Lists available Azure Table Storage table names.
+- Route: `/api/diagnostics/table-entities?table=<tableName>&limit=50&partitionKey=<optional>`
+	- Lists entities from a specific table, optionally filtered by partition key.
+- Route: `/api/diagnostics/table-enumeration?tableLimit=20&entityLimit=5`
+	- Enumerates tables and returns a small sample of entities per table.
+
+These routes use `TABLE_ACCOUNT_URL` (or `STORAGE_ACCOUNT_URL` fallback) and Azure AD auth via managed identity / `DefaultAzureCredential`.
+
 ## OCDS Classification Triggers
 
 - HTTP route: `/api/ocds/classify?source=<key>`
