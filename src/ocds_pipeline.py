@@ -239,10 +239,58 @@ def _get_ocds_contracts_by_date(
     Returns:
         A list of normalized contract dicts extracted from OCDS awards.
     """
+    def _to_utc_iso_timestamp(date_value: str, is_end: bool) -> str:
+        raw = str(date_value or "").strip()
+        if not raw:
+            raise ValueError("Date value is required.")
+
+        try:
+            parsed_datetime = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            if parsed_datetime.tzinfo is None:
+                parsed_datetime = parsed_datetime.replace(tzinfo=timezone.utc)
+            parsed_datetime = parsed_datetime.astimezone(timezone.utc)
+            return parsed_datetime.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        except ValueError:
+            pass
+
+        try:
+            parsed_date = datetime.fromisoformat(raw).date()
+        except ValueError as ex:
+            raise ValueError(
+                f"Invalid date value '{raw}'. Expected ISO date or datetime."
+            ) from ex
+
+        if is_end:
+            parsed_datetime = datetime(
+                parsed_date.year,
+                parsed_date.month,
+                parsed_date.day,
+                23,
+                59,
+                59,
+                tzinfo=timezone.utc,
+            )
+        else:
+            parsed_datetime = datetime(
+                parsed_date.year,
+                parsed_date.month,
+                parsed_date.day,
+                0,
+                0,
+                0,
+                tzinfo=timezone.utc,
+            )
+
+        return parsed_datetime.isoformat().replace("+00:00", "Z")
+
     if not start_date or not end_date:
         raise ValueError("Both start_date and end_date are required.")
 
-    request_url = f"{ocds_url}/{date_type}/{start_date}/{end_date}"
+    start_timestamp = _to_utc_iso_timestamp(start_date, is_end=False)
+    end_timestamp = _to_utc_iso_timestamp(end_date, is_end=True)
+    base_url = ocds_url.rstrip("/")
+    find_by_dates_base = base_url if base_url.endswith("/findByDates") else f"{base_url}/findByDates"
+    request_url = f"{find_by_dates_base}/{date_type}/{start_timestamp}/{end_timestamp}"
     query_params: dict[str, Any] = dict(params or {})
     query_params.setdefault("limit", limit)
 
