@@ -291,8 +291,7 @@ def _get_ocds_contracts_by_date(
     base_url = ocds_url.rstrip("/")
     find_by_dates_base = base_url if base_url.endswith("/findByDates") else f"{base_url}/findByDates"
     request_url = f"{find_by_dates_base}/{date_type}/{start_timestamp}/{end_timestamp}"
-    query_params: dict[str, Any] = dict(params or {})
-    query_params.setdefault("limit", limit)
+    query_params: dict[str, Any] | None = dict(params or {}) or None
 
     response = requests.get(request_url, params=query_params, timeout=timeout)
     response.raise_for_status()
