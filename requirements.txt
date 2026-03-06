@@ -5,3 +5,4 @@ azure-keyvault-secrets
 azure-ai-projects
 azure-data-tables
 requests
+exchangelib

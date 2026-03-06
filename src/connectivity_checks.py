@@ -3,6 +3,7 @@ import logging
 import os
 import requests
 import time
+from typing import Any
 
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
@@ -37,7 +38,7 @@ def _check_storage(credential: DefaultAzureCredential) -> dict[str, Any]:
         "canListContainers": True,
         "firstContainerName": first_container.get("name") if first_container else None,
     }
-    return _result("storage", True, details, (time.perf_counter() - start) * 1000)    
+    return _result("storage", True, details, (time.perf_counter() - start) * 1000)
 
 
 def _check_key_vault(credential: DefaultAzureCredential) -> dict[str, Any]:
@@ -71,7 +72,10 @@ def _check_foundry_agent(credential: DefaultAzureCredential) -> dict[str, Any]:
     start = time.perf_counter()
     endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip().rstrip("/")
     project = os.getenv("AZURE_AI_FOUNDRY_PROJECT", "").strip()
-    agent_id = os.getenv("AZURE_AI_FOUNDRY_AGENT", "").strip()
+    agent_id = os.getenv(
+        "AZURE_AI_FOUNDRY_CLASSIFIER_AGENT",
+        os.getenv("AZURE_AI_FOUNDRY_AGENT", ""),
+    ).strip()
     project_endpoint = f"{endpoint}/api/projects/{project}"
     project_endpoint = "https://sra1d-foundry-01.services.ai.azure.com/api/projects/proj_default"
     prompt = "Hello Agent, this is a connectivity test. Please respond with OK."

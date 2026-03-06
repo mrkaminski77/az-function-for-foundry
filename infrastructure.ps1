@@ -22,6 +22,7 @@ $frontend_ip_name = "{0}-frontend" -f $PROJECT
 $backend_pool_name = "{0}-backend-pool" -f $PROJECT
 $LB_NAME = "{0}-hub-lb" -f $PROJECT
 $HUB_NSG_NAME = "{0}-hub-dev-nsg" -f $PROJECT
+$ampls_name = "$PROJECT-ampls"
 
 $SPOKE_VNET_RG = "rg-{0}-spoke-dev" -f $PROJECT
 $SPOKE_VNET_NAME = "{0}-spoke-dev" -f $PROJECT
@@ -210,7 +211,7 @@ az network nsg create `
 
 az monitor private-link-scope create `
     --resource-group $HUB_VNET_RG `
-    --name "$PROJECT-ampls"
+    --name $ampls_name
 
 $law_id = (az monitor log-analytics workspace create `
     --resource-group $HUB_VNET_RG `
@@ -834,7 +835,7 @@ az functionapp config appsettings set `
          "KEY_VAULT_SECRET_NAME=ai-foundry-key" `
          "AZURE_AI_FOUNDRY_ENDPOINT=https://sra1d-foundry-01.services.ai.azure.com/" `
          "AZURE_AI_FOUNDRY_PROJECT=proj-default" `
-         "AZURE_AI_FOUNDRY_AGENT=asst_jvXRZdimLpqYRb9PrO72tPXp" `
+         "AZURE_AI_FOUNDRY_CLASSIFIER_AGENT=asst_jvXRZdimLpqYRb9PrO72tPXp" `
          "ENTRA_TEST_SCOPE=https://graph.microsoft.com/.default" `
          "GRAPH_API_URL=https://graph.microsoft.com/v1.0" `
          "STORAGE_ACCOUNT_URL=https://$FUNC_STORAGE_ACCOUNT.blob.core.windows.net/" `
@@ -868,3 +869,40 @@ az monitor diagnostic-settings create `
     --logs '[{"category":"FunctionAppLogs","enabled":true},{"category":"AppServiceAuditLogs","enabled":true},{"category":"AppServiceIPSecAuditLogs","enabled":true}]' `
     --metrics '[{"category":"AllMetrics","enabled":true}]' `
     --subscription $SUBSCRIPTION_ID
+
+$law_id = (az monitor log-analytics workspace show `
+    --resource-group $HUB_VNET_RG `
+    --workspace-name "$PROJECT-law" `
+    --subscription $SUBSCRIPTION_ID | ConvertFrom-Json).id
+
+az monitor app-insights component create `
+    --app $FUNC_NAME `
+    --location $LOC `
+    --resource-group $FUNC_RG `
+    --subscription $SUBSCRIPTION_ID `
+    --application-type web `
+    --workspace $law_id `
+    --public-network-access Disabled
+
+$app_insights_id = (az monitor app-insights component show `
+    --app $FUNC_NAME `
+    --resource-group $FUNC_RG `
+    --subscription $SUBSCRIPTION_ID | ConvertFrom-Json).id
+
+ az monitor private-link-scope scoped-resource create `
+    --name $FUNC_NAME `
+    --resource-group $HUB_VNET_RG `
+    --scope-name $ampls_name `
+    --linked-resource $app_insights_id `
+    --subscription $SUBSCRIPTION_ID
+
+$connection_string = (az monitor app-insights component show `
+    --app $FUNC_NAME `
+    --resource-group $FUNC_RG `
+    --subscription $SUBSCRIPTION_ID | ConvertFrom-Json).connectionString
+
+az functionapp config appsettings set `
+     --name $FUNC_NAME `
+     --resource-group $FUNC_RG `
+     --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=$connection_string" `
+     --subscription $SUBSCRIPTION_ID
