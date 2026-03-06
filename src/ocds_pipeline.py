@@ -16,7 +16,7 @@ from azure.keyvault.secrets import SecretClient
 from azure.storage.blob import BlobServiceClient
 from azure.ai.agents.models import ListSortOrder
 
-from azure.data.tables import TableClient
+from azure.data.tables import TableClient, UpdateMode
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError
 import uuid
 
@@ -100,7 +100,7 @@ def _set_watermark(
     source_key: str = "DEFAULT",
 ) -> None:
     table_client.upsert_entity(
-        mode="Replace",
+        mode=UpdateMode.REPLACE,
         entity={
             "PartitionKey": "__meta__",
             "RowKey": f"watermark_{source_key}_{date_type}",
