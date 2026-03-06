@@ -6,7 +6,7 @@ def _get_dummy_ocds_response() -> dict[str, Any]:
         "uri": "https://example.local/ocds/releases",
         "version": "1.1",
         "publisher": {
-            "name": "AusTender (Dummy)",
+            "name": "OCDS Dummy Publisher",
             "uri": "https://www.tenders.gov.au",
         },
         "license": "https://creativecommons.org/licenses/by/4.0/",

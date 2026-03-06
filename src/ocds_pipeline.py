@@ -111,7 +111,7 @@ def _set_watermark(
 
 
 def _resolve_run_log_table_name() -> str:
-    configured = os.getenv("AUSTENDER_RUN_LOG_TABLE", "").strip()
+    configured = os.getenv("OCDS_RUN_LOG_TABLE", "").strip()
     return configured or "OcdsRunHistory"
 
 
@@ -226,7 +226,7 @@ def _get_ocds_contracts_by_date(
     params: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Retrieve government contracts from an AusTender OCDS endpoint.
+    Retrieve government contracts from an OCDS endpoint.
 
     Args:
         ocds_url: Full OCDS API URL (endpoint returning OCDS JSON).
@@ -449,7 +449,7 @@ def _get_and_classify_contracts(
         effective_end_date = str(end_date).strip()
     else:
         watermark = _get_watermark(table_client=table_client, date_type=date_type, source_key=source_scope)
-        initial_lookback_days = int(os.getenv("AUSTENDER_INITIAL_LOOKBACK_DAYS", "1"))
+        initial_lookback_days = int(os.getenv("OCDS_INITIAL_LOOKBACK_DAYS", "1"))
 
         now_utc = datetime.now(timezone.utc).date()
         effective_end_date = now_utc.isoformat()
@@ -586,6 +586,6 @@ def _get_and_classify_contracts(
                 ocds_url=ocds_url,
             )
         except Exception:
-            logging.exception("Failed to write AusTender run summary for run_id=%s", run_id)
+            logging.exception("Failed to write OCDS run summary for run_id=%s", run_id)
 
 

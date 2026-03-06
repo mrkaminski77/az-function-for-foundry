@@ -73,12 +73,12 @@ func start
 
 Compatibility note: code still accepts `AZURE_AI_FOUNDRY_AGENT` as a legacy fallback.
 
-### Environment variables (AusTender)
+### Environment variables (OCDS)
 
-- `AUSTENDER_OCDS_URL` - default OCDS endpoint base URL
-- `AUSTENDER_OCDS_URL_<SOURCE_KEY>` - source-specific endpoint URL used when `source=<SOURCE_KEY>` is passed (example: `AUSTENDER_OCDS_URL_HEALTH`)
-- `AUSTENDER_CHECK_SCHEDULE` - NCRONTAB schedule for the timer orchestration
-- `AUSTENDER_RUN_LOG_TABLE` - Optional table name for per-run execution summaries (default: `OcdsRunHistory`)
+- `<SOURCE>_OCDS_URL` - OCDS endpoint base URL for each source (example: `AUSTENDER_OCDS_URL`)
+- `<SOURCE>_CHECK_SCHEDULE` - NCRONTAB schedule for timer trigger of each source (example: `AUSTENDER_CHECK_SCHEDULE`)
+- `OCDS_RUN_LOG_TABLE` - Optional table name for per-run execution summaries (default: `OcdsRunHistory`)
+- `OCDS_INITIAL_LOOKBACK_DAYS` - Optional fallback lookback window when no watermark exists (default: `1`)
 
 ### Environment variables (EWS result delivery)
 
@@ -104,15 +104,16 @@ Implementation notes:
 
 Source notes:
 
-- if `source` is omitted, the default key is `DEFAULT` and `AUSTENDER_OCDS_URL` is used
+- `source` is required for OCDS routes
 - source values are normalized to uppercase and non-alphanumeric chars become `_`
+- routes resolve endpoint env vars as `<SOURCE>_OCDS_URL`
 - watermarking, dedupe partitioning, and run logs are scoped by normalized source key
 
 ### Table Storage Defaults
 
 - Classification results table: `OcdsClassifications`
 - Run summary table: `OcdsRunHistory`
-- Optional override: `AUSTENDER_RUN_LOG_TABLE` (overrides only the run summary table name)
+- Optional override: `OCDS_RUN_LOG_TABLE` (overrides only the run summary table name)
 
 ## Run Audit Logging
 
