@@ -6,3 +6,4 @@ azure-ai-projects
 azure-data-tables
 requests
 exchangelib
+pydantic<2.11
