@@ -149,3 +149,8 @@ Assign your Function App managed identity (or local principal) enough permission
 
 When creating the Function App in Azure, choose the **Flex Consumption** hosting plan and Python runtime.
 Then deploy this project using VS Code Azure Functions extension, Azure Developer CLI, or CI/CD.
+
+## Resources
+
+[Swagger Documentation](https://app.swaggerhub.com/apis/austender/ocds-api/1.1#/)
+
