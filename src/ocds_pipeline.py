@@ -20,6 +20,7 @@ import uuid
 
 import random
 
+_credential = DefaultAzureCredential(exclude_interactive_browser_credential=True)
 
 def _resolve_table_endpoint() -> str:
     table_endpoint = os.getenv("TABLE_ACCOUNT_URL", "").strip().rstrip("/")
@@ -117,7 +118,7 @@ def _create_table_client(table_name: str) -> TableClient:
     table_client = TableClient(
         endpoint=_resolve_table_endpoint(),
         table_name=table_name,
-        credential=DefaultAzureCredential(),
+        credential=_credential,
     )
     try:
         table_client.create_table()
@@ -300,10 +301,10 @@ def _get_ocds_contracts_by_date(
     try:
         blob_client = BlobServiceClient(
             account_url=os.getenv("STORAGE_ACCOUNT_URL", "").strip().rstrip("/"),
-            credential=DefaultAzureCredential(),
+            credential=_credential,
         )
         container_client = blob_client.get_container_client(blob_container)
-        container_client.upload_blob(blob_path, json.dumps(payload), overwrite=True)
+        container_client.upload_blob(blob_path, json.dumps(response.json()), overwrite=True)
         logging.info("OCDS response saved to blob storage. path=%s", blob_path)
     except Exception as ex:
         logging.warning("Failed to save OCDS response to blob storage. Error: %s", ex)
@@ -375,7 +376,7 @@ def _classify_contract(contract: dict[str, Any]) -> dict[str, Any]:
             project_endpoint = f"{endpoint}/api/projects/{project_name}"
 
         client = AIProjectClient(
-            credential=DefaultAzureCredential(),
+            credential=_credential,
             endpoint=project_endpoint,
         )
 
