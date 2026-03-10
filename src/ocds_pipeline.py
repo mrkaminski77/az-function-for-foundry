@@ -293,6 +293,21 @@ def _get_ocds_contracts_by_date(
 
     response = requests.get(request_url, params=query_params, timeout=timeout)
     response.raise_for_status()
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    blob_container = "ocdsraw"
+    blob_path = f"{start_date.split('-')[0]}/{start_date.split('-')[1]}/{start_date.split('-')[2]}/response-{timestamp}.json"
+
+    try:
+        blob_client = BlobServiceClient(
+            account_url=os.getenv("STORAGE_ACCOUNT_URL", "").strip().rstrip("/"),
+            credential=DefaultAzureCredential(),
+        )
+        container_client = blob_client.get_container_client(blob_container)
+        container_client.upload_blob(blob_path, json.dumps(payload), overwrite=True)
+        logging.info("OCDS response saved to blob storage. path=%s", blob_path)
+    except Exception as ex:
+        logging.warning("Failed to save OCDS response to blob storage. Error: %s", ex)
+
     payload = response.json()
     #payload = _get_dummy_ocds_response()  # For development/testing without hitting real API
     # OCDS packages can contain "releases" or "records"
