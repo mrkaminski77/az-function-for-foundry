@@ -666,6 +666,17 @@ az network private-endpoint create `
     --group-id table `
     --subscription $SUBSCRIPTION_ID    
 
+$queuepename = "{0}-func-queue-pe" -f $PROJECT
+az network private-endpoint create `
+    --resource-group $FUNC_RG `
+    --name $queuepename `
+    --connection-name "$queuepename-queue" `
+    --vnet-name $FUNC_VNET_NAME `
+    --subnet "storage-subnet" `
+    --private-connection-resource-id "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$FUNC_RG/providers/Microsoft.Storage/storageAccounts/$FUNC_STORAGE_ACCOUNT" `
+    --group-id queue `
+    --subscription $SUBSCRIPTION_ID   
+
 $HUB_BLOB_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"
 az network private-endpoint dns-zone-group create `
     --resource-group $FUNC_RG `
@@ -683,6 +694,15 @@ az network private-endpoint dns-zone-group create `
     --zone-name "table" `
     --private-dns-zone $HUB_TABLE_ZONE_ID `
     --subscription $SUBSCRIPTION_ID
+
+$HUB_QUEUE_ZONE_ID = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$HUB_VNET_RG/providers/Microsoft.Network/privateDnsZones/privatelink.queue.core.windows.net"    
+az network private-endpoint dns-zone-group create `
+    --resource-group $FUNC_RG `
+    --endpoint-name $queuepename `
+    --name "queue-dns-zone-group" `
+    --zone-name "queue" `
+    --private-dns-zone $HUB_QUEUE_ZONE_ID `
+    --subscription $SUBSCRIPTION_ID    
 
 $UAMI_ID = (az identity show `
     --resource-group $FUNC_RG `
@@ -777,6 +797,24 @@ az role assignment create `
     --scope $STORAGE_ID `
     --assignee-principal-type ServicePrincipal `
     --subscription $SUBSCRIPTION_ID
+
+$STORAGE_ID = (az storage account show `
+    --resource-group "rg-demonet-func-dev" `
+    --name "demonetfuncdevsa" `
+    --subscription "e6dbcc53-5170-441b-8c16-e6d1c5a3c092" | ConvertFrom-Json).id
+
+# For the system-assigned identity
+$SAMI_ID = (az functionapp identity show `
+    --name "demonet-func-dev-app" `
+    --resource-group "rg-demonet-func-dev" `
+    --subscription "e6dbcc53-5170-441b-8c16-e6d1c5a3c092" | ConvertFrom-Json).principalId
+
+az role assignment create `
+    --assignee-object-id $SAMI_ID `
+    --role "Storage Queue Data Contributor" `
+    --scope $STORAGE_ID `
+    --assignee-principal-type ServicePrincipal `
+    --subscription "e6dbcc53-5170-441b-8c16-e6d1c5a3c092"    
 
 az role assignment create `
     --assignee-object-id $function_msi_id `
