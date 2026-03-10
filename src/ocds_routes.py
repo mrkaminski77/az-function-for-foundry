@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import traceback
 from datetime import date
 from typing import Any
 
@@ -145,7 +146,7 @@ def classify_ocds_contracts(req: func.HttpRequest) -> func.HttpResponse:
         )
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
@@ -155,6 +156,7 @@ def classify_ocds_contracts(req: func.HttpRequest) -> func.HttpResponse:
         error_payload: dict[str, Any] = {
             "type": type(exc).__name__,
             "error": str(exc),
+            "traceback": traceback.format_exc(),
         }
 
         resp = getattr(exc, "response", None)
@@ -208,7 +210,7 @@ def classify_ocds_contracts_range(req: func.HttpRequest) -> func.HttpResponse:
         )
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
@@ -218,6 +220,7 @@ def classify_ocds_contracts_range(req: func.HttpRequest) -> func.HttpResponse:
         error_payload: dict[str, Any] = {
             "type": type(exc).__name__,
             "error": str(exc),
+            "traceback": traceback.format_exc(),
         }
 
         resp = getattr(exc, "response", None)
@@ -243,7 +246,7 @@ def get_ocds_runs(req: func.HttpRequest) -> func.HttpResponse:
         source_key = _normalize_source_param(source_raw)
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
@@ -252,7 +255,7 @@ def get_ocds_runs(req: func.HttpRequest) -> func.HttpResponse:
         limit = int(limit_raw)
     except ValueError:
         return func.HttpResponse(
-            body=json.dumps({"error": "Query parameter 'limit' must be an integer."}),
+            body=json.dumps({"error": "Query parameter 'limit' must be an integer.", "traceback": traceback.format_exc()}),
             status_code=400,
             mimetype="application/json",
         )
@@ -267,7 +270,7 @@ def get_ocds_runs(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as exc:
         logging.exception("Failed to retrieve OCDS run summaries")
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=500,
             mimetype="application/json",
         )
@@ -300,7 +303,7 @@ def get_ocds_sources(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as exc:
         logging.exception("Failed to list OCDS sources")
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=500,
             mimetype="application/json",
         )

@@ -44,7 +44,7 @@ def list_table_names(limit: int = 50) -> list[str]:
     for index, table in enumerate(service.list_tables()):
         if index >= safe_limit:
             break
-        table_name = str(table.get("name") or "")
+        table_name = str(table.name or "")
         if table_name:
             names.append(table_name)
 

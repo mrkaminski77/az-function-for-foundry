@@ -1,5 +1,6 @@
 import json
 import logging
+import traceback
 from typing import Any
 
 import azure.functions as func
@@ -39,14 +40,14 @@ def get_table_names(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(body=json.dumps(body, indent=2), status_code=200, mimetype="application/json")
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
     except Exception as exc:
         logging.exception("Failed to list table names")
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=500,
             mimetype="application/json",
         )
@@ -80,14 +81,14 @@ def get_table_entities(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(body=json.dumps(body, indent=2), status_code=200, mimetype="application/json")
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
     except Exception as exc:
         logging.exception("Failed to list table entities")
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=500,
             mimetype="application/json",
         )
@@ -111,14 +112,14 @@ def get_table_enumeration(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(body=json.dumps(body, indent=2), status_code=200, mimetype="application/json")
     except ValueError as exc:
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=400,
             mimetype="application/json",
         )
     except Exception as exc:
         logging.exception("Failed to enumerate table storage")
         return func.HttpResponse(
-            body=json.dumps({"type": type(exc).__name__, "error": str(exc)}, indent=2),
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
             status_code=500,
             mimetype="application/json",
         )

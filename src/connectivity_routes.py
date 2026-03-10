@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import traceback
 from typing import Any
 
 import azure.functions as func
@@ -35,19 +36,19 @@ def connectivity(req: func.HttpRequest) -> func.HttpResponse:
         try:
             checks.append(check())
         except Exception as exc:
-            checks.append(_result(name, False, {"error": str(exc)}, 0))
+            checks.append(_result(name, False, {"error": str(exc), "traceback": traceback.format_exc()}, 0))
 
     try:
         entra_result, access_token = _check_entra(credential)
         checks.append(entra_result)
     except Exception as exc:
-        checks.append(_result("entra", False, {"error": str(exc)}, 0))
+        checks.append(_result("entra", False, {"error": str(exc), "traceback": traceback.format_exc()}, 0))
 
     if access_token:
         try:
             checks.append(_check_graph(access_token))
         except Exception as exc:
-            checks.append(_result("graphApi", False, {"error": str(exc)}, 0))
+            checks.append(_result("graphApi", False, {"error": str(exc), "traceback": traceback.format_exc()}, 0))
     else:
         checks.append(_result("graphApi", False, {"error": "Skipped because Entra token acquisition failed"}, 0))
 
