@@ -14,7 +14,7 @@ ocds_durable_blueprint = func.Blueprint()
 
 @ocds_durable_blueprint.route(route="ocds/classify-range", methods=["GET"], auth_level=func.AuthLevel.FUNCTION)
 @ocds_durable_blueprint.durable_client_input(client_name="client")
-async def classify_range_start(req: func.HttpRequest, client: df.DurableOrchestrationClient) -> func.HttpResponse:
+async def classify_range_start(req: func.HttpRequest, client) -> func.HttpResponse:
     logging.info("OCDS classify-range durable start triggered.")
     source_raw = req.params.get("source")
     start_date = req.params.get("start_date")
@@ -85,7 +85,7 @@ def classify_range_activity(params: dict) -> dict:
 
 @ocds_durable_blueprint.route(route="ocds/classify-range/status/{job_id}", methods=["GET"], auth_level=func.AuthLevel.FUNCTION)
 @ocds_durable_blueprint.durable_client_input(client_name="client")
-async def classify_range_status(req: func.HttpRequest, client: df.DurableOrchestrationClient) -> func.HttpResponse:
+async def classify_range_status(req: func.HttpRequest, client) -> func.HttpResponse:
     job_id = req.route_params.get("job_id", "").strip()
 
     if not job_id:
