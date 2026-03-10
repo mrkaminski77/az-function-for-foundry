@@ -38,7 +38,16 @@ async def classify_range_start(req: func.HttpRequest, client) -> func.HttpRespon
         "end_date": validated_end,
     }
 
-    instance_id = await client.start_new("classify_range_orchestrator", client_input=payload)
+    try:
+        instance_id = await client.start_new("classify_range_orchestrator", client_input=payload)
+    except Exception as exc:
+        logging.exception("Failed to start durable orchestration")
+        return func.HttpResponse(
+            body=json.dumps({"type": type(exc).__name__, "error": str(exc), "traceback": traceback.format_exc()}, indent=2),
+            status_code=500,
+            mimetype="application/json",
+        )
+
     logging.info("Started orchestration with instance id: %s", instance_id)
 
     return func.HttpResponse(
