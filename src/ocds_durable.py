@@ -9,7 +9,7 @@ import azure.functions as func
 from src.ocds_pipeline import _get_and_classify_contracts
 from src.ocds_routes import _resolve_ocds_url_for_source, _validate_date_range
 
-ocds_durable_blueprint = func.Blueprint()
+ocds_durable_blueprint = df.Blueprint()
 
 
 @ocds_durable_blueprint.route(route="ocds/classify-range", methods=["GET"], auth_level=func.AuthLevel.FUNCTION)
