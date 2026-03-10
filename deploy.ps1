@@ -10,6 +10,7 @@ $zip = "deploy.zip"
 
 # 3) Create ZIP package (exclude local/dev artifacts)
 if (Test-Path $zip) { Remove-Item $zip -Force }
+Get-ChildItem -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
 Get-ChildItem -Force | Where-Object {
     $_.Name -notin @(".venv","__pycache__",".git",".python_packages","local.settings.json",$zip, "infrastructure.ps1")
 } | Compress-Archive -DestinationPath $zip -Force
