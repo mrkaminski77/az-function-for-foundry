@@ -750,7 +750,7 @@ az functionapp create `
     --storage-account $FUNC_STORAGE_ACCOUNT `
     --functions-version 4 `
     --runtime python `
-    --runtime-version 3.14 `
+    --runtime-version 3.11 `
     --vnet $FUNC_VNET_NAME `
     --subnet $FUNC_SUBNET_NAME `
     --subscription $SUBSCRIPTION_ID `

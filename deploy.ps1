@@ -15,16 +15,27 @@ Get-ChildItem -Force | Where-Object {
     $_.Name -notin @(".venv","__pycache__",".git",".python_packages","local.settings.json",$zip, "infrastructure.ps1")
 } | Compress-Archive -DestinationPath $zip -Force
 
-# 4) Deploy ZIP to Function App
+# 4) Ensure remote build is enabled and Python runtime is 3.11
+az functionapp config appsettings set `
+  --resource-group $rg `
+  --name $app `
+  --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true ENABLE_ORYX_BUILD=true
+
+az functionapp config set `
+  --resource-group $rg `
+  --name $app `
+  --linux-fx-version "Python|3.11"
+
+# 5) Deploy ZIP to Function App
 az functionapp deployment source config-zip `
   --resource-group $rg `
   --name $app `
   --src $zip
 
-# 5) Get default host key
+# 6) Get default host key
 $key = az functionapp keys list --resource-group $rg --name $app --query "functionKeys.default" -o tsv
 
-# 6) Open test URL
+# 7) Open test URL
 $url = "https://$app.azurewebsites.net/api/connectivity?code=$key"
 $url
 curl $url
