@@ -10,6 +10,8 @@ from azure.identity import DefaultAzureCredential
 from azure.core.credentials import AzureKeyCredential
 from azure.keyvault.secrets import SecretClient
 from azure.storage.blob import BlobServiceClient
+from azure.storage.queue import QueueServiceClient
+from azure.data.tables import TableServiceClient
 from azure.ai.agents.models import ListSortOrder
 
 
@@ -22,7 +24,7 @@ def _result(name: str, ok: bool, details: dict[str, Any], elapsed_ms: float) -> 
     }
 
 
-def _check_storage(credential: DefaultAzureCredential) -> dict[str, Any]:
+def _check_blob(credential: DefaultAzureCredential) -> dict[str, Any]:
     start = time.perf_counter()
     account_url = os.getenv("STORAGE_ACCOUNT_URL", "").strip()
     if not account_url:
@@ -38,7 +40,43 @@ def _check_storage(credential: DefaultAzureCredential) -> dict[str, Any]:
         "canListContainers": True,
         "firstContainerName": first_container.get("name") if first_container else None,
     }
-    return _result("storage", True, details, (time.perf_counter() - start) * 1000)
+    return _result("blob", True, details, (time.perf_counter() - start) * 1000)
+
+
+def _check_table(credential: DefaultAzureCredential) -> dict[str, Any]:
+    start = time.perf_counter()
+    account_url = os.getenv("TABLE_ACCOUNT_URL", "").strip()
+    if not account_url:
+        raise ValueError("Missing TABLE_ACCOUNT_URL")
+
+    client = TableServiceClient(endpoint=account_url, credential=credential)
+    first_table = next(client.list_tables(results_per_page=1), None)
+
+    details = {
+        "accountUrl": account_url,
+        "canListTables": True,
+        "firstTableName": first_table.name if first_table else None,
+    }
+    return _result("table", True, details, (time.perf_counter() - start) * 1000)
+
+
+def _check_queue(credential: DefaultAzureCredential) -> dict[str, Any]:
+    start = time.perf_counter()
+    account_url = os.getenv("STORAGE_ACCOUNT_URL", "").strip()
+    if not account_url:
+        raise ValueError("Missing STORAGE_ACCOUNT_URL")
+
+    # Derive queue endpoint from blob endpoint (same account, different service)
+    queue_url = account_url.replace(".blob.", ".queue.")
+    client = QueueServiceClient(account_url=queue_url, credential=credential)
+    first_queue = next(client.list_queues(results_per_page=1), None)
+
+    details = {
+        "accountUrl": queue_url,
+        "canListQueues": True,
+        "firstQueueName": first_queue.name if first_queue else None,
+    }
+    return _result("queue", True, details, (time.perf_counter() - start) * 1000)
 
 
 def _check_key_vault(credential: DefaultAzureCredential) -> dict[str, Any]:

@@ -8,7 +8,9 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 
 from src.connectivity_checks import (
-    _check_storage,
+    _check_blob,
+    _check_table,
+    _check_queue,
     _check_key_vault,
     _check_foundry_agent,
     _check_entra,
@@ -29,7 +31,9 @@ def connectivity(req: func.HttpRequest) -> func.HttpResponse:
     access_token = ""
 
     for name, check in [
-        ("storage", lambda: _check_storage(credential)),
+        ("blob", lambda: _check_blob(credential)),
+        ("table", lambda: _check_table(credential)),
+        ("queue", lambda: _check_queue(credential)),
         ("keyVault", lambda: _check_key_vault(credential)),
         ("foundryAgent", lambda: _check_foundry_agent(credential)),
     ]:
